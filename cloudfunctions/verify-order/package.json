@@ -1,9 +1,0 @@
-{
-  "name": "verify-order",
-  "version": "1.0.0",
-  "description": "小红书订单验证云函数",
-  "main": "index.js",
-  "dependencies": {
-    "@cloudbase/node-sdk": "^2.9.1"
-  }
-}
