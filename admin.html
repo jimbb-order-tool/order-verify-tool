@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>金薄薄 · 订单管理后台</title>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif;
+            background:linear-gradient(160deg,#e8f5e9 0%,#a5d6a7 50%,#c8e6c9 100%);
+            min-height:100vh;padding:20px}
+        .box{max-width:800px;margin:0 auto;background:rgba(255,255,255,.95);border-radius:24px;
+            padding:30px;box-shadow:0 20px 60px rgba(46,125,50,.18);backdrop-filter:blur(12px);
+            border:1px solid rgba(129,199,132,.3);animation:up .6s ease}
+        @keyframes up{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+        h1{color:#1b5e20;font-size:24px;margin-bottom:8px}
+        .sub{color:#388e3c;font-size:14px;margin-bottom:24px}
+        .logout-btn{float:right;background:#fff3e0;color:#e65100;border:1px solid #ffcc80;padding:6px 16px;border-radius:8px;cursor:pointer;font-size:13px}
+        .logout-btn:hover{background:#ffe0b2}
+        .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px}
+        .stat{background:linear-gradient(135deg,#e8f5e9,#c8e6c9);padding:20px;border-radius:16px;text-align:center}
+        .stat-num{font-size:32px;font-weight:700;color:#1b5e20}
+        .stat-label{font-size:13px;color:#388e3c;margin-top:4px}
+        .loginBox{background:#f1f8e9;padding:30px;border-radius:16px;text-align:center}
+        .loginBox input{width:100%;max-width:300px;padding:14px 16px;border:2px solid #c8e6c9;
+            border-radius:12px;font-size:15px;margin-bottom:16px;background:#fff}
+        .loginBox input:focus{outline:none;border-color:#66bb6a}
+        .loginBox button{padding:14px 40px;background:linear-gradient(135deg,#66bb6a,#2e7d32);
+            color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer}
+        .loginBox .err{color:#e65100;font-size:13px;margin-top:12px;display:none}
+        .dz{border:2px dashed #81c784;border-radius:16px;padding:40px 20px;text-align:center;
+            background:#f1f8e9;cursor:pointer;transition:all .3s}
+        .dz:hover{border-color:#4caf50;background:#e8f5e9}
+        .dz.dragover{border-color:#2e7d32;background:#c8e6c9}
+        .dz-icon{font-size:48px;margin-bottom:12px}
+        .dz-text{color:#388e3c;font-size:14px}
+        .dz input{display:none}
+        .pv{margin-top:20px;padding:20px;background:#f1f8e9;border-radius:12px;display:none}
+        .pv h3{color:#1b5e20;font-size:16px;margin-bottom:12px}
+        .pv table{width:100%;border-collapse:collapse;font-size:13px}
+        .pv td{padding:8px 12px;border-bottom:1px solid #c8e6c9;color:#2e7d32}
+        .pv tr:last-child td{border-bottom:none}
+        .act{display:flex;gap:12px;margin-top:20px}
+        .act button{flex:1;padding:14px;border:none;border-radius:12px;font-size:15px;
+            font-weight:600;cursor:pointer;transition:all .3s}
+        .act .imp{background:linear-gradient(135deg,#66bb6a,#2e7d32);color:#fff}
+        .act .imp:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(46,125,50,.3)}
+        .act .clr{background:#fff3e0;color:#e65100;border:2px solid #ffcc80}
+        .act .clr:hover{background:#ffe0b2}
+        .pg{display:none;margin-top:16px}
+        .pg-bar{height:8px;background:#c8e6c9;border-radius:4px;overflow:hidden}
+        .pg-fill{height:100%;width:0%;background:linear-gradient(90deg,#66bb6a,#2e7d32);
+            transition:width .3s ease}
+        .pg-text{text-align:center;color:#388e3c;font-size:13px;margin-top:8px}
+        .rm{margin-top:16px;padding:12px;border-radius:8px;font-size:14px;display:none}
+        .rm.ok{background:#e8f5e9;color:#1b5e20}
+        .rm.er{background:#fff3e0;color:#e65100}
+        .ap{display:none}
+        .debug{font-size:11px;color:#999;margin-top:8px;text-align:left;display:none;word-break:break-all}
+    </style>
+</head>
+<body>
+<div class="box">
+    <h1>🍃🍫 金薄薄订单管理 <button class="logout-btn" id="logoutBtn" onclick="doLogout()">退出登录</button></h1>
+    <p class="sub">后台管理系统 · 数据存储在云端数据库</p>
+    <div class="stats">
+        <div class="stat"><div class="stat-num" id="st">0</div><div class="stat-label">总订单数</div></div>
+        <div class="stat"><div class="stat-num" id="su">0</div><div class="stat-label">已使用</div></div>
+        <div class="stat"><div class="stat-num" id="sl">0</div><div class="stat-label">剩余可用</div></div>
+    </div>
+    <div class="loginBox" id="loginBox">
+        <p style="color:#388e3c;margin-bottom:16px">请输入管理密码</p>
+        <input type="password" id="lp" placeholder="管理密码">
+        <br>
+        <button id="lbn">登录</button>
+        <p class="err" id="le">密码错误</p>
+        <p class="debug" id="debug"></p>
+    </div>
+    <div class="ap" id="ap">
+        <div class="dz" id="dz">
+            <div class="dz-icon">📁</div>
+            <div class="dz-text">点击或拖拽上传订单号文件（每行一个订单号）<br>支持 .txt .csv 文件</div>
+            <input type="file" id="fi" accept=".txt,.csv">
+        </div>
+        <div class="pv" id="pv">
+            <h3>📋 预览数据 <span id="pc"></span></h3>
+            <table><tbody id="pb"></tbody></table>
+        </div>
+        <div class="pg" id="pg">
+            <div class="pg-bar"><div class="pg-fill" id="pf"></div></div>
+            <div class="pg-text" id="ptx">准备导入...</div>
+        </div>
+        <div class="rm" id="rm"></div>
+        <div class="act" id="act" style="display:none">
+            <button class="imp" id="ib" onclick="imp()">确认导入</button>
+            <button class="clr" onclick="clr()">清空数据</button>
+        </div>
+    </div>
+</div>
+<script>
+var cur=[],tok='';
+var API_BASE='https://ai-native-1gsyl93m8aa2bf68-1392489955.ap-shanghai.app.tcloudbase.com/api';
+
+function $(id){return document.getElementById(id)}
+
+function showDebug(msg){
+    var el=$('debug');
+    el.textContent=msg;
+    el.style.display='block';
+}
+
+function updateStats(data){
+    if(!data)return;
+    $('st').textContent=data.total||0;
+    $('su').textContent=data.used||0;
+    $('sl').textContent=data.remaining||0;
+}
+
+async function chk(){
+    $('loginBox').style.display='none';
+    $('ap').style.display='none';
+    tok=localStorage.getItem('at')||'';
+    if(!tok){
+        showLogin();
+        return;
+    }
+    try{
+        var r=await fetch(API_BASE+'/stats',{headers:{'Authorization':'Bearer '+tok}});
+        var d=await r.json();
+        if(d.success){
+            updateStats(d);
+            showAdmin();
+        }else{
+            localStorage.removeItem('at');
+            showLogin();
+        }
+    }catch(e){
+        localStorage.removeItem('at');
+        showLogin();
+    }
+}
+
+function showLogin(){
+    $('loginBox').style.display='block';
+    $('ap').style.display='none';
+    $('logoutBtn').style.display='none';
+    $('lp').value='';
+    $('le').style.display='none';
+    $('debug').style.display='none';
+}
+
+function showAdmin(){
+    $('loginBox').style.display='none';
+    $('ap').style.display='block';
+    $('logoutBtn').style.display='block';
+}
+
+function doLogout(){
+    localStorage.removeItem('at');
+    tok='';
+    showLogin();
+}
+
+$('lbn').onclick=doLogin;
+$('lp').onkeydown=function(e){if(e.key==='Enter')doLogin()};
+
+async function doLogin(){
+    var pwd=$('lp').value;
+    if(!pwd){
+        $('le').textContent='请输入密码';
+        $('le').style.display='block';
+        return;
+    }
+    $('le').style.display='none';
+    try{
+        var r=await fetch(API_BASE+'/login',{
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({password:pwd})
+        });
+        var d=await r.json();
+        if(d.success){
+            tok=d.token;
+            localStorage.setItem('at',tok);
+            // 获取统计数据
+            var sr=await fetch(API_BASE+'/stats',{headers:{'Authorization':'Bearer '+tok}});
+            var sd=await sr.json();
+            if(sd.success){
+                updateStats(sd);
+                showAdmin();
+            }else{
+                $('le').textContent='获取数据失败';
+                $('le').style.display='block';
+            }
+        }else{
+            $('le').textContent=d.error||'密码错误';
+            $('le').style.display='block';
+            if(d.error)showDebug('服务器返回: '+d.error);
+        }
+    }catch(e){
+        $('le').textContent='网络错误，请重试';
+        $('le').style.display='block';
+        showDebug('网络错误: '+e.message);
+    }
+}
+
+var dz=$('dz');
+dz.ondragover=function(e){e.preventDefault();dz.classList.add('dragover')};
+dz.ondragleave=function(){dz.classList.remove('dragover')};
+dz.ondrop=function(e){e.preventDefault();dz.classList.remove('dragover');if(e.dataTransfer.files[0])handleF(e.dataTransfer.files[0])};
+dz.onclick=function(){$('fi').click()};
+$('fi').onchange=function(e){if(e.target.files[0])handleF(e.target.files[0])};
+
+function handleF(f){
+    var r=new FileReader();
+    r.onload=function(e){
+        var t=e.target.result;
+        cur=t.split(/[\r\n]+/).map(function(s){return s.trim()}).filter(function(s){return /^P\d{18}$/i.test(s)}).map(function(s){return s.toUpperCase()});
+        cur=[...new Set(cur)];
+        if(!cur.length){alert('未找到有效订单号');return}
+        showPv();
+    };
+    r.readAsText(f);
+}
+
+function showPv(){
+    $('pv').style.display='block';
+    $('pc').textContent='共 '+cur.length+' 条有效数据';
+    var b=$('pb');
+    b.innerHTML='';
+    cur.slice(0,15).forEach(function(id){b.innerHTML+='<tr><td>'+id+'</td></tr>'});
+    if(cur.length>15)b.innerHTML+='<tr><td style="text-align:center;color:#999">...还有 '+(cur.length-15)+' 条</td></tr>';
+    $('act').style.display='flex';
+    $('rm').style.display='none';
+}
+
+function reset(){cur=[];$('fi').value='';$('pv').style.display='none';$('act').style.display='none';$('rm').style.display='none'}
+
+async function imp(){
+    if(!cur.length)return;
+    var ib=$('ib');
+    ib.disabled=true;
+    $('pg').style.display='block';
+    $('rm').style.display='none';
+    
+    // 分批导入，每批800条（避免超出云函数payload限制）
+    var BATCH_SIZE=800;
+    var total=cur.length;
+    var totalImported=0;
+    var totalInvalid=0;
+    var batches=Math.ceil(total/BATCH_SIZE);
+    
+    $('ptx').textContent='准备导入 '+total+' 条，分 '+batches+' 批处理...';
+    $('pf').style.width='0%';
+    
+    try{
+        for(var i=0;i<cur.length;i+=BATCH_SIZE){
+            var batch=cur.slice(i,i+BATCH_SIZE);
+            var batchNum=Math.floor(i/BATCH_SIZE)+1;
+            $('ptx').textContent='正在导入第 '+batchNum+'/'+batches+' 批...';
+            
+            var r=await fetch(API_BASE+'/import',{
+                method:'POST',
+                headers:{'Content-Type':'application/json','Authorization':'Bearer '+tok},
+                body:JSON.stringify({orders:batch})
+            });
+            var d=await r.json();
+            
+            if(d.success){
+                totalImported+=d.imported||0;
+                totalInvalid+=d.invalid||0;
+                var progress=Math.min(100,Math.round((i+BATCH_SIZE)/total*100));
+                $('pf').style.width=progress+'%';
+            }else{
+                // 如果某批失败，继续导入后续批次
+                console.error('批次 '+batchNum+' 失败:', d.error);
+            }
+        }
+        
+        $('pf').style.width='100%';
+        $('ptx').textContent='导入完成！';
+        
+        var el=$('rm');
+        el.className='rm ok';
+        el.textContent='成功导入 '+totalImported+' 条';
+        if(totalInvalid>0)el.textContent+='，格式错误 '+totalInvalid+' 条';
+        el.style.display='block';
+        
+        // 刷新统计数据
+        var sr=await fetch(API_BASE+'/stats',{headers:{'Authorization':'Bearer '+tok}});
+        var sd=await sr.json();
+        if(sd.success)updateStats(sd);
+        
+        setTimeout(reset,3000);
+    }catch(e){
+        var el=$('rm');
+        el.className='rm er';
+        el.textContent='网络错误：'+e.message;
+        el.style.display='block';
+    }
+    ib.disabled=false;
+    setTimeout(function(){$('pg').style.display='none';$('pf').style.width='0%'},2000);
+}
+
+async function clr(){
+    if(!confirm('确定要重置所有订单吗？所有订单将变为未使用状态（不是删除数据）？'))return;
+    try{
+        var r=await fetch(API_BASE+'/clear',{method:'POST',headers:{'Authorization':'Bearer '+tok}});
+        var d=await r.json();
+        if(d.success){
+            // 重置后刷新统计数据
+            var sr=await fetch(API_BASE+'/stats',{headers:{'Authorization':'Bearer '+tok}});
+            var sd=await sr.json();
+            if(sd.success)updateStats(sd);
+            alert('已重置所有订单为未使用状态');
+        }else{
+            alert('操作失败：'+(d.error||'未知错误'));
+        }
+    }catch(e){
+        alert('网络错误');
+    }
+}
+
+// 定期刷新统计数据
+setInterval(function(){
+    if(!tok)return;
+    fetch(API_BASE+'/stats',{headers:{'Authorization':'Bearer '+tok}})
+        .then(function(r){return r.json()})
+        .then(function(d){if(d.success)updateStats(d)})
+        .catch(function(){})
+},10000);
+
+// 启动检查
+chk();
+</script>
+</body>
+</html>

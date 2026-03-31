@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>金薄薄 · 订单验证</title>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif;
+            background:linear-gradient(160deg,#e8f5e9 0%,#a5d6a7 50%,#c8e6c9 100%);
+            min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+        .box{background:rgba(255,255,255,.95);border-radius:24px;padding:40px 30px;
+            box-shadow:0 20px 60px rgba(46,125,50,.18);max-width:420px;width:100%;
+            text-align:center;backdrop-filter:blur(12px);border:1px solid rgba(129,199,132,.3);
+            animation:up .6s ease}
+        @keyframes up{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+        .logo{width:90px;height:90px;margin:0 auto 20px;
+            background:linear-gradient(135deg,#81c784,#388e3c);border-radius:50%;
+            display:flex;align-items:center;justify-content:center;position:relative;
+            box-shadow:0 8px 25px rgba(76,175,80,.35)}
+        .logo-leaf{font-size:42px;position:absolute;top:-8px;left:-8px}
+        .logo-choco{font-size:36px;position:absolute;bottom:-6px;right:-6px}
+        .logo-t{font-size:28px;font-weight:800;
+            background:linear-gradient(135deg,#fff,#e8f5e9);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+        h1{color:#1b5e20;font-size:26px;font-weight:700;margin-bottom:8px;line-height:1.4}
+        .sub{color:#388e3c;font-size:15px;margin-bottom:28px;opacity:.85}
+        .tag{display:inline-block;background:linear-gradient(135deg,#e8f5e9,#c8e6c9);
+            padding:4px 14px;border-radius:20px;color:#2e7d32;font-size:12px;font-weight:500;margin-bottom:24px}
+        .fg{margin-bottom:20px;text-align:left}
+        label{display:block;color:#2e7d32;font-size:14px;font-weight:600;margin-bottom:8px}
+        input[type=text]{width:100%;padding:16px 18px;border:2px solid #c8e6c9;border-radius:14px;
+            font-size:16px;transition:all .3s;background:#f1f8e9;color:#1b5e20;letter-spacing:1px}
+        input:focus{outline:none;border-color:#66bb6a;background:#fff;box-shadow:0 0 0 4px rgba(102,187,106,.2)}
+        input::placeholder{color:#a5d6a7;letter-spacing:0}
+        .btn{width:100%;padding:17px;background:linear-gradient(135deg,#66bb6a,#2e7d32);color:#fff;
+            border:none;border-radius:14px;font-size:17px;font-weight:600;cursor:pointer;
+            transition:all .3s;box-shadow:0 6px 20px rgba(46,125,50,.35);margin-top:8px}
+        .btn:hover{transform:translateY(-2px);box-shadow:0 10px 30px rgba(46,125,50,.4)}
+        .btn:active{transform:translateY(0)}
+        .btn:disabled{opacity:.65;cursor:not-allowed;transform:none}
+        .msg{margin-top:18px;padding:14px 16px;border-radius:12px;font-size:14px;display:none;animation:up .3s ease}
+        .msg.err{background:#fff3e0;color:#e65100;border-left:4px solid #ff9800}
+        .msg.ok{background:#e8f5e9;color:#1b5e20;border-left:4px solid #4caf50}
+        .msg.show{display:block}
+        @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+        .shake{animation:shake .4s ease}
+        .ft{margin-top:28px;color:#81c784;font-size:12px;opacity:.6}
+        @media(max-width:480px){.box{padding:30px 22px}h1{font-size:22px}}
+    </style>
+</head>
+<body>
+<div class="box">
+    <div class="logo"><span class="logo-leaf">🍃</span><span class="logo-t">M</span><span class="logo-choco">🍫</span></div>
+    <h1>金薄薄</h1>
+    <p class="sub">小红书专属尝鲜装订单验证</p>
+    <span class="tag">🎁 输入小红书订单号，验证后领取送朋友专属券</span>
+    <div class="fg">
+        <label>订单号</label>
+        <input type="text" id="oid" placeholder="请输入订单号（如：P123456789012345678）" maxlength="19">
+    </div>
+    <button class="btn" id="btn" onclick="verify()">立即验证</button>
+    <div class="msg" id="msg"></div>
+    <p class="ft">BOCO · 金薄薄 · 2026</p>
+</div>
+<script>
+const REDIRECT_URL='https://shop184291289.youzan.com/wscump/coupon/fetch?alias=nkpn3gi9&sign=e874e5cd2f3beb1b3db7d65144e4acfb&shopAutoEnter=1';
+const API_BASE='https://ai-native-1gsyl93m8aa2bf68-1392489955.ap-shanghai.app.tcloudbase.com/api';
+function $(id){return document.getElementById(id)}
+function show(msg,type){
+    var el=$('msg');
+    el.textContent=msg;
+    el.className='msg show '+(type||'err');
+}
+async function verify(){
+    var oid=$('oid').value.trim().toUpperCase();
+    if(!oid){show('请输入订单号');$('oid').focus();return}
+    if(!/^P\d{18}$/.test(oid)){
+        show('订单号格式错误，应为P+18位数字');
+        $('oid').classList.add('shake');
+        setTimeout(function(){$('oid').classList.remove('shake')},400);
+        return
+    }
+    $('btn').disabled=true;
+    show('正在验证...','ok');
+    try{
+        var r=await fetch(API_BASE+'/verify',{
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({orderId:oid})
+        });
+        var d=await r.json();
+        if(d.success){
+            show('验证成功！正在跳转领取页面...','ok');
+            setTimeout(function(){window.location.href=d.redirectUrl||REDIRECT_URL},1500);
+        }else{
+            show(d.error||'验证失败');
+            $('btn').disabled=false;
+        }
+    }catch(e){
+        show('网络错误，请重试');
+        $('btn').disabled=false;
+    }
+}
+$('oid').addEventListener('keypress',function(e){if(e.key==='Enter')verify()});
+</script>
+</body>
+</html>
