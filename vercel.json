@@ -1,28 +1,29 @@
 {
   "version": 2,
-  "name": "order-verify-tool",
-  "builds": [
+  "rewrites": [
     {
-      "src": "index.html",
-      "use": "@vercel/static"
+      "source": "/api/verify",
+      "destination": "/api/verify.js"
     },
     {
-      "src": "admin.html",
-      "use": "@vercel/static"
+      "source": "/api/login",
+      "destination": "/api/login.js"
     },
     {
-      "src": "public/**",
-      "use": "@vercel/static"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/admin",
-      "dest": "/admin.html"
+      "source": "/api/stats",
+      "destination": "/api/stats.js"
     },
     {
-      "src": "/(.*)",
-      "dest": "/index.html"
+      "source": "/api/import",
+      "destination": "/api/import.js"
+    },
+    {
+      "source": "/admin",
+      "destination": "/admin.html"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ]
 }
