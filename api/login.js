@@ -1,6 +1,6 @@
 // Vercel Serverless Function - 管理员登录
 const crypto = require('crypto');
-const ADMIN_PWD = 'bochoco2026';
+const ADMIN_PWD = process.env.ADMIN_PWD || '';
 
 // 内存存储 token
 const TOKENS = new Set();
@@ -20,6 +20,10 @@ module.exports = (req, res) => {
 
   try {
     const { password } = req.body || {};
+
+    if (!ADMIN_PWD) {
+      return res.status(500).json({ success: false, error: '后台未配置管理员密码' });
+    }
 
     if (password !== ADMIN_PWD) {
       return res.status(401).json({ success: false, error: '密码错误' });

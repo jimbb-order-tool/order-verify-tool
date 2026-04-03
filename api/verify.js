@@ -1,7 +1,6 @@
 // Vercel Serverless Function - 订单验证
 // 注意：此为演示版本，实际订单验证需连接腾讯云数据库
 
-const ADMIN_PWD = 'bochoco2026';
 const REDIRECT_URL = 'https://shop184291289.youzan.com/wscump/coupon/fetch?alias=nkpn3gi9&sign=e874e5cd2f3beb1b3db7d65144e4acfb&shopAutoEnter=1';
 
 // 内存存储（演示用）

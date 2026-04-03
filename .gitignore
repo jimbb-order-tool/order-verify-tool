@@ -40,6 +40,8 @@ Thumbs.db
 
 # 敏感文件
 .github_credentials
+账户信息.md
+账户信息_v*.md
 orders.json
 certificate.pem
 *.py
